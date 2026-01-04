@@ -1,0 +1,32 @@
+﻿# Node
+node_modules/
+.npm/
+.pnpm-store/
+
+# Nest build
+backend/dist/
+
+# Env
+**/.env
+
+# Flutter / Dart
+.dart_tool/
+build/
+
+# Flutter generated
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Archives
+*.zip
+
+# OS
+.DS_Store
+Thumbs.db

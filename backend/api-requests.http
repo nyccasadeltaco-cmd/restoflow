@@ -1,0 +1,53 @@
+[collection]
+name = "RestFolow API"
+baseUrl = http://localhost:3000/api
+
+[environment]
+JWT_TOKEN = 
+
+### Auth - Login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "password123"
+}
+
+### Auth - Register
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "newuser@example.com",
+  "password": "password123",
+  "firstName": "John",
+  "lastName": "Doe"
+}
+
+### Users - Get All
+GET {{baseUrl}}/users
+Authorization: Bearer {{JWT_TOKEN}}
+
+### Users - Get One
+GET {{baseUrl}}/users/user-id-here
+Authorization: Bearer {{JWT_TOKEN}}
+
+### Restaurants - Get All
+GET {{baseUrl}}/restaurants
+Authorization: Bearer {{JWT_TOKEN}}
+
+### Orders - Create
+POST {{baseUrl}}/orders
+Content-Type: application/json
+Authorization: Bearer {{JWT_TOKEN}}
+
+{
+  "tableId": "table-id",
+  "items": [
+    {
+      "menuItemId": "item-id",
+      "quantity": 2
+    }
+  ]
+}

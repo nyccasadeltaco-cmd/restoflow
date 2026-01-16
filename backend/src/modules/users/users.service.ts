@@ -3,6 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User, UserRole } from './entities/user.entity';
 import * as bcrypt from 'bcrypt';
+import {
+  findSupabaseUserIdByEmail,
+  getSupabaseAdminClient,
+} from '../../common/supabase/supabase-admin';
 
 export interface CreateRestaurantOwnerDto {
   fullName: string;
@@ -93,6 +97,8 @@ export class UsersService {
 
     const savedUser = await this.usersRepository.save(user);
 
+    await this.syncSupabasePassword(data.email, plainPassword);
+
     // Retornar usuario con la contraseña temporal en texto plano (para mostrarla al admin)
     // NOTA: Esta contraseña solo se devuelve en la creación, no se almacena en texto plano
     (savedUser as any).temporaryPassword = plainPassword ?? '';
@@ -141,6 +147,7 @@ export class UsersService {
 
       await this.usersRepository.save(user);
       temporaryPassword = plainPassword;
+      await this.syncSupabasePassword(user.email, plainPassword);
     } else {
       // Usuario existe -> actualizar
       const nameParts = data.fullName.trim().split(' ');
@@ -163,6 +170,15 @@ export class UsersService {
       if (data.password) {
         user.password = await bcrypt.hash(data.password, 10);
         temporaryPassword = data.password;
+        await this.syncSupabasePassword(user.email, data.password);
+      } else {
+        const supabaseUserId = await this.getSupabaseUserId(user.email);
+        if (!supabaseUserId) {
+          const generatedPassword = this.generateTemporaryPassword();
+          user.password = await bcrypt.hash(generatedPassword, 10);
+          temporaryPassword = generatedPassword;
+          await this.syncSupabasePassword(user.email, generatedPassword);
+        }
       }
 
       await this.usersRepository.save(user);
@@ -193,6 +209,10 @@ export class UsersService {
       password,
     });
 
+    if (user.email) {
+      await this.syncSupabasePassword(user.email, newPassword);
+    }
+
     return {
       message: 'Contraseña actualizada exitosamente',
       user: {
@@ -213,5 +233,61 @@ export class UsersService {
       password += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return password;
+  }
+
+  private async getSupabaseUserId(email?: string): Promise<string | null> {
+    if (!email) {
+      return null;
+    }
+
+    const adminClient = getSupabaseAdminClient();
+    if (!adminClient) {
+      return null;
+    }
+
+    return findSupabaseUserIdByEmail(adminClient, email);
+  }
+
+  async syncSupabasePassword(
+    email: string | null | undefined,
+    password: string,
+  ) {
+    if (!email) {
+      return;
+    }
+
+    const adminClient = getSupabaseAdminClient();
+    if (!adminClient) {
+      return;
+    }
+
+    const userId = await this.getSupabaseUserId(email);
+
+    if (userId) {
+      const { error } = await adminClient.auth.admin.updateUserById(userId, {
+        password,
+        email_confirm: true,
+      });
+
+      if (error) {
+        throw new BadRequestException(
+          `Supabase Auth update failed: ${error.message}`,
+        );
+      }
+
+      return;
+    }
+
+    const { error } = await adminClient.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+    });
+
+    if (error) {
+      throw new BadRequestException(
+        `Supabase Auth create failed: ${error.message}`,
+      );
+    }
   }
 }

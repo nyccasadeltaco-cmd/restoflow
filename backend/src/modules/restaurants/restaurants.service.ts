@@ -432,6 +432,11 @@ export class RestaurantsService {
     adminUser.password = hashedPassword;
     await this.usersRepository.save(adminUser);
 
+    await this.usersService.syncSupabasePassword(
+      adminUser.email,
+      dto.newPassword,
+    );
+
     return {
       success: true,
       message: `Contraseña actualizada para ${adminUser.email}`,

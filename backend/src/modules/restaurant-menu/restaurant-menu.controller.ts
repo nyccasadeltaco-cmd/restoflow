@@ -28,6 +28,7 @@ import {
   CreateMenuItemDto,
   UpdateMenuItemDto,
 } from './dto/menu-item.dto';
+import { MenuImageUploadDto } from './dto/menu-image.dto';
 
 @ApiTags('Restaurant Menu')
 @ApiBearerAuth()
@@ -146,5 +147,19 @@ export class RestaurantMenuController {
   ) {
     const restaurantId = req.user.restaurantId;
     return this.service.updateItem(restaurantId, id, dto);
+  }
+
+  @Post('items/upload-image')
+  @ApiOperation({
+    summary: 'Subir imagen de item del menA§',
+    description:
+      'Sube una imagen a Supabase Storage usando credenciales del servidor.',
+  })
+  async uploadItemImage(
+    @Req() req: any,
+    @Body() dto: MenuImageUploadDto,
+  ) {
+    const restaurantId = req.user.restaurantId;
+    return this.service.uploadMenuImage(restaurantId, dto);
   }
 }

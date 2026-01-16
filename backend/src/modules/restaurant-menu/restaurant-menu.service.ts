@@ -4,6 +4,7 @@ import { Repository, ILike } from 'typeorm';
 import { Menu } from '../menus/entities/menu.entity';
 import { MenuCategory } from '../menus/entities/menu-category.entity';
 import { MenuItem } from '../menus/entities/menu-item.entity';
+import { randomUUID } from 'crypto';
 import {
   CreateMenuCategoryDto,
   UpdateMenuCategoryDto,
@@ -12,6 +13,8 @@ import {
   CreateMenuItemDto,
   UpdateMenuItemDto,
 } from './dto/menu-item.dto';
+import { MenuImageUploadDto } from './dto/menu-image.dto';
+import { getSupabaseAdminClient } from '../../common/supabase/supabase-admin';
 
 @Injectable()
 export class RestaurantMenuService {
@@ -291,5 +294,59 @@ export class RestaurantMenuService {
     });
 
     return this.itemsRepo.save(item);
+  }
+
+  async uploadMenuImage(restaurantId: string, dto: MenuImageUploadDto) {
+    const client = getSupabaseAdminClient();
+    if (!client) {
+      throw new BadRequestException('Supabase admin no configurado');
+    }
+
+    const imageBuffer = this._decodeBase64(dto.imageBase64);
+    if (!imageBuffer || imageBuffer.length === 0) {
+      throw new BadRequestException('Imagen invalida');
+    }
+
+    const safeName = this._sanitizeFileName(dto.fileName);
+    const itemId = dto.itemId?.trim();
+    const fileId = itemId && itemId.length > 0 ? itemId : randomUUID();
+    const fileSlug =
+      itemId && itemId.length > 0
+        ? fileId
+        : `${fileId}-${this._stripExtension(safeName)}`;
+    const path = `restaurants/${restaurantId}/menu/${fileSlug}.jpg`;
+
+    const bucket = 'product-images';
+    const { error } = await client.storage.from(bucket).upload(path, imageBuffer, {
+      contentType: 'image/jpeg',
+      upsert: true,
+    });
+
+    if (error) {
+      throw new BadRequestException(`No se pudo subir la imagen: ${error.message}`);
+    }
+
+    const { data } = client.storage.from(bucket).getPublicUrl(path);
+    return { publicUrl: data.publicUrl, path };
+  }
+
+  private _decodeBase64(value: string): Buffer {
+    const trimmed = value.trim();
+    const commaIndex = trimmed.indexOf(',');
+    const base64 = commaIndex >= 0 ? trimmed.substring(commaIndex + 1) : trimmed;
+    return Buffer.from(base64, 'base64');
+  }
+
+  private _sanitizeFileName(name: string): string {
+    const cleaned = name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    return cleaned.length > 0 ? cleaned.toLowerCase() : 'image';
+  }
+
+  private _stripExtension(name: string): string {
+    const dot = name.lastIndexOf('.');
+    if (dot <= 0) {
+      return name;
+    }
+    return name.substring(0, dot);
   }
 }

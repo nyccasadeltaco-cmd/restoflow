@@ -7,10 +7,14 @@ export function getSupabaseAdminClient(): SupabaseClient | null {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!url || !serviceRoleKey) {
+    // Safe diagnostic: never log secrets.
+    console.warn('[SUPABASE ADMIN] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
     return null;
   }
 
   if (!supabaseAdminClient) {
+    // Safe diagnostic: confirm admin client initialization.
+    console.log('[SUPABASE ADMIN] Initializing admin client with service role key');
     supabaseAdminClient = createClient(url, serviceRoleKey, {
       auth: {
         persistSession: false,

@@ -159,6 +159,7 @@ export class RestaurantMenuController {
     @Req() req: any,
     @Body() dto: MenuImageUploadDto,
   ) {
+    console.log('[MENU UPLOAD] Received upload-image request');
     const restaurantId = req.user.restaurantId;
     return this.service.uploadMenuImage(restaurantId, dto);
   }

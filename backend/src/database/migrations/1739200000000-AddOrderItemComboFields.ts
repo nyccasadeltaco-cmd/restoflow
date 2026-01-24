@@ -6,46 +6,46 @@ export class AddOrderItemComboFields1739200000000 implements MigrationInterface 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       ALTER TABLE order_items
-      ADD COLUMN IF NOT EXISTS item_type varchar(20) NOT NULL DEFAULT 'menu_item';
+      ADD COLUMN IF NOT EXISTS "itemType" varchar(20) NOT NULL DEFAULT 'menu_item';
     `);
     await queryRunner.query(`
       ALTER TABLE order_items
-      ADD COLUMN IF NOT EXISTS combo_id uuid NULL;
+      ADD COLUMN IF NOT EXISTS "comboId" uuid NULL;
     `);
     await queryRunner.query(`
       ALTER TABLE order_items
-      ADD COLUMN IF NOT EXISTS display_name text NULL;
+      ADD COLUMN IF NOT EXISTS "displayName" text NULL;
     `);
     await queryRunner.query(`
       ALTER TABLE order_items
-      ADD COLUMN IF NOT EXISTS display_description text NULL;
+      ADD COLUMN IF NOT EXISTS "displayDescription" text NULL;
     `);
     await queryRunner.query(`
       ALTER TABLE order_items
-      ALTER COLUMN menu_item_id DROP NOT NULL;
+      ALTER COLUMN "menuItemId" DROP NOT NULL;
     `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       ALTER TABLE order_items
-      ALTER COLUMN menu_item_id SET NOT NULL;
+      ALTER COLUMN "menuItemId" SET NOT NULL;
     `);
     await queryRunner.query(`
       ALTER TABLE order_items
-      DROP COLUMN IF EXISTS display_description;
+      DROP COLUMN IF EXISTS "displayDescription";
     `);
     await queryRunner.query(`
       ALTER TABLE order_items
-      DROP COLUMN IF EXISTS display_name;
+      DROP COLUMN IF EXISTS "displayName";
     `);
     await queryRunner.query(`
       ALTER TABLE order_items
-      DROP COLUMN IF EXISTS combo_id;
+      DROP COLUMN IF EXISTS "comboId";
     `);
     await queryRunner.query(`
       ALTER TABLE order_items
-      DROP COLUMN IF EXISTS item_type;
+      DROP COLUMN IF EXISTS "itemType";
     `);
   }
 }

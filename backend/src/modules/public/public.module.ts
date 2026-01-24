@@ -9,9 +9,29 @@ import { Restaurant } from '../restaurants/entities/restaurant.entity';
 import { Menu } from '../menus/entities/menu.entity';
 import { MenuItem } from '../menus/entities/menu-item.entity';
 import { MenuCategory } from '../menus/entities/menu-category.entity';
+import { FeaturedSection } from '../featured/entities/featured-section.entity';
+import { FeaturedItem } from '../featured/entities/featured-item.entity';
+import { Combo } from '../featured/entities/combo.entity';
+import { ComboItem } from '../featured/entities/combo-item.entity';
+import { Order } from '../orders/entities/order.entity';
+import { OrderItem } from '../orders/entities/order-item.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Tenant, Restaurant, Menu, MenuItem, MenuCategory])],
+  imports: [
+    TypeOrmModule.forFeature([
+      Tenant,
+      Restaurant,
+      Menu,
+      MenuItem,
+      MenuCategory,
+      FeaturedSection,
+      FeaturedItem,
+      Combo,
+      ComboItem,
+      Order,
+      OrderItem,
+    ]),
+  ],
   controllers: [
     PublicTenantsController,
     PublicMenuController,

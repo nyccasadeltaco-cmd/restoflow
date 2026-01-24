@@ -9,10 +9,21 @@ import { MenuItem } from '../menus/entities/menu-item.entity';
 import { Menu } from '../menus/entities/menu.entity';
 import { MenuCategory } from '../menus/entities/menu-category.entity';
 import { Restaurant } from '../restaurants/entities/restaurant.entity';
+import { Combo } from '../featured/entities/combo.entity';
+import { ComboItem } from '../featured/entities/combo-item.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Order, OrderItem, MenuItem, Menu, MenuCategory, Restaurant]),
+    TypeOrmModule.forFeature([
+      Order,
+      OrderItem,
+      MenuItem,
+      Menu,
+      MenuCategory,
+      Restaurant,
+      Combo,
+      ComboItem,
+    ]),
   ],
   controllers: [
     RestaurantOrdersController,

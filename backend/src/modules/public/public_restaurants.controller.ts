@@ -138,6 +138,14 @@ export class PublicRestaurantsController {
             isEnabled: true,
             sortOrder: 1,
           } as FeaturedSection,
+          {
+            id: 'daily',
+            restaurantId: restaurant.id,
+            key: 'daily',
+            title: 'Plato del dia',
+            isEnabled: true,
+            sortOrder: 2,
+          } as FeaturedSection,
         ];
 
     const now = new Date();
@@ -201,6 +209,7 @@ export class PublicRestaurantsController {
       .where('o.restaurantId = :restaurantId', { restaurantId })
       .andWhere('o.status != :canceled', { canceled: 'CANCELED' })
       .andWhere('o.createdAt >= :since', { since })
+      .andWhere('oi.itemType = :itemType', { itemType: 'menu_item' })
       .groupBy('oi.menuItemId')
       .orderBy('qty', 'DESC')
       .limit(8)

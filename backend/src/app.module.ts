@@ -27,6 +27,7 @@ import { RestaurantMenuModule } from './modules/restaurant-menu/restaurant-menu.
 import { SocialMediaModule } from './modules/social-media/social-media.module';
 import { AiModule } from './modules/ai/ai.module';
 import { HealthController } from './health.controller';
+import { FeaturedModule } from './modules/featured/featured.module';
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { HealthController } from './health.controller';
     NotificationsModule,
     RestaurantPanelModule,
     RestaurantMenuModule,
+    FeaturedModule,
     SocialMediaModule,
     AiModule,
     TenantTestModule,

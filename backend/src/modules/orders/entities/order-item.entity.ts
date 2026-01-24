@@ -5,11 +5,23 @@ export class OrderItem {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ name: 'order_id' })
   orderId: string;
 
-  @Column()
+  @Column({ name: 'menu_item_id', nullable: true })
   menuItemId: string;
+
+  @Column({ name: 'item_type', length: 20, default: 'menu_item' })
+  itemType: string;
+
+  @Column({ name: 'combo_id', nullable: true })
+  comboId: string;
+
+  @Column({ name: 'display_name', type: 'text', nullable: true })
+  displayName: string;
+
+  @Column({ name: 'display_description', type: 'text', nullable: true })
+  displayDescription: string;
 
   @Column({ type: 'int', default: 1 })
   quantity: number;

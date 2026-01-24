@@ -18,9 +18,27 @@ export class CreateOrderItemDto {
     description: 'Menu item ID',
     example: '123e4567-e89b-12d3-a456-426614174000',
   })
-  @IsNotEmpty()
   @IsString()
-  menuItemId: string;
+  @IsOptional()
+  menuItemId?: string;
+
+  @ApiProperty({
+    description: 'Combo ID (when item is combo)',
+    required: false,
+    example: '123e4567-e89b-12d3-a456-426614174999',
+  })
+  @IsOptional()
+  @IsString()
+  comboId?: string;
+
+  @ApiProperty({
+    description: 'Item type',
+    required: false,
+    example: 'menu_item',
+  })
+  @IsOptional()
+  @IsString()
+  itemType?: string;
 
   @ApiProperty({
     description: 'Quantity',

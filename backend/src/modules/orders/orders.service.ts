@@ -11,6 +11,8 @@ import { MenuItem } from '../menus/entities/menu-item.entity';
 import { Menu } from '../menus/entities/menu.entity';
 import { MenuCategory } from '../menus/entities/menu-category.entity';
 import { Restaurant } from '../restaurants/entities/restaurant.entity';
+import { Combo } from '../featured/entities/combo.entity';
+import { ComboItem } from '../featured/entities/combo-item.entity';
 import { FilterRestaurantOrdersDto } from './dto/filter-restaurant-orders.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
@@ -31,6 +33,10 @@ export class OrdersService {
     private menuCategoriesRepository: Repository<MenuCategory>,
     @InjectRepository(Restaurant)
     private restaurantsRepository: Repository<Restaurant>,
+    @InjectRepository(Combo)
+    private combosRepository: Repository<Combo>,
+    @InjectRepository(ComboItem)
+    private comboItemsRepository: Repository<ComboItem>,
   ) {}
 
   /**
@@ -179,8 +185,16 @@ export class OrdersService {
     }
 
     // 2. Load menu items and calculate totals
-    const menuItemIds = createOrderDto.items.map((item) => item.menuItemId);
+    const menuItemIds = createOrderDto.items
+      .filter((item) => (item.itemType ?? 'menu_item') === 'menu_item')
+      .map((item) => item.menuItemId)
+      .filter((id): id is string => Boolean(id));
+    const comboIds = createOrderDto.items
+      .filter((item) => (item.itemType ?? 'menu_item') === 'combo')
+      .map((item) => item.comboId)
+      .filter((id): id is string => Boolean(id));
     const uniqueItemIds = Array.from(new Set(menuItemIds));
+    const uniqueComboIds = Array.from(new Set(comboIds));
 
     const menus = await this.menusRepository.find({
       where: { restaurantId: restaurant.id },
@@ -198,22 +212,44 @@ export class OrdersService {
     }
 
     const categoryIds = categories.map((category) => category.id);
-    const menuItems = await this.menuItemsRepository.find({
-      where: {
-        id: In(uniqueItemIds),
-        categoryId: In(categoryIds),
-      },
-    });
+    const menuItems = uniqueItemIds.length > 0
+      ? await this.menuItemsRepository.find({
+          where: {
+            id: In(uniqueItemIds),
+            categoryId: In(categoryIds),
+          },
+        })
+      : [];
 
     if (menuItems.length !== uniqueItemIds.length) {
       throw new BadRequestException('One or more menu items not found for this restaurant');
     }
 
-    // Check all items are available
+    const combos = uniqueComboIds.length > 0
+      ? await this.combosRepository.find({
+          where: {
+            id: In(uniqueComboIds),
+            restaurantId: restaurant.id,
+            isActive: true,
+          },
+        })
+      : [];
+
+    if (combos.length !== uniqueComboIds.length) {
+      throw new BadRequestException('One or more combos not found for this restaurant');
+    }
+
     const unavailableItems = menuItems.filter((item) => !item.isAvailable);
     if (unavailableItems.length > 0) {
       throw new BadRequestException(
         `Items not available: ${unavailableItems.map((i) => i.name).join(', ')}`,
+      );
+    }
+
+    const unavailableCombos = combos.filter((combo) => !combo.isAvailable);
+    if (unavailableCombos.length > 0) {
+      throw new BadRequestException(
+        `Combos not available: ${unavailableCombos.map((c) => c.name).join(', ')}`,
       );
     }
 
@@ -222,6 +258,28 @@ export class OrdersService {
     const orderItems: Partial<OrderItem>[] = [];
 
     for (const itemDto of createOrderDto.items) {
+      const itemType = itemDto.itemType ?? 'menu_item';
+      if (itemType === 'combo') {
+        const combo = combos.find((c) => c.id === itemDto.comboId);
+        if (!combo) continue;
+        const unitPrice = Number(combo.price);
+        const totalPrice = unitPrice * itemDto.quantity;
+        subtotal += totalPrice;
+
+        orderItems.push({
+          itemType: 'combo',
+          comboId: combo.id,
+          displayName: combo.name,
+          displayDescription: combo.description || null,
+          quantity: itemDto.quantity,
+          unitPrice,
+          totalPrice,
+          notes: itemDto.notes || null,
+          modifiers: itemDto.modifiers || null,
+        });
+        continue;
+      }
+
       const menuItem = menuItems.find((mi) => mi.id === itemDto.menuItemId);
       if (!menuItem) continue;
 
@@ -230,6 +288,7 @@ export class OrdersService {
       subtotal += totalPrice;
 
       orderItems.push({
+        itemType: 'menu_item',
         menuItemId: menuItem.id,
         quantity: itemDto.quantity,
         unitPrice,
@@ -286,14 +345,29 @@ export class OrdersService {
 
   private async attachMenuItems(items: OrderItem[]): Promise<any[]> {
     if (!items.length) return [];
-    const menuItemIds = Array.from(new Set(items.map((item) => item.menuItemId)));
-    const menuItems = await this.menuItemsRepository.find({
-      where: { id: In(menuItemIds) },
-    });
+    const menuItemIds = Array.from(
+      new Set(items.map((item) => item.menuItemId).filter((id) => id)),
+    );
+    const menuItems = menuItemIds.length > 0
+      ? await this.menuItemsRepository.find({
+          where: { id: In(menuItemIds) },
+        })
+      : [];
     const menuItemMap = new Map(menuItems.map((item) => [item.id, item]));
 
     return items.map((item) => {
-      const menuItem = menuItemMap.get(item.menuItemId);
+      if (item.itemType === 'combo') {
+        return {
+          ...item,
+          menuItem: {
+            id: item.comboId,
+            name: item.displayName ?? 'Combo',
+            description: item.displayDescription ?? '',
+          },
+        };
+      }
+
+      const menuItem = item.menuItemId ? menuItemMap.get(item.menuItemId) : null;
       return {
         ...item,
         menuItem: menuItem

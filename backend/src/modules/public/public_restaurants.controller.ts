@@ -203,7 +203,7 @@ export class PublicRestaurantsController {
 
     const rows = await this.orderItemsRepo
       .createQueryBuilder('oi')
-      .innerJoin(Order, 'o', 'o.id = oi.orderId')
+      .innerJoin(Order, 'o', 'o.id::text = oi.orderId')
       .select('oi.menuItemId', 'menuItemId')
       .addSelect('SUM(oi.quantity)', 'qty')
       .where('o.restaurantId = :restaurantId', { restaurantId })

@@ -18,7 +18,7 @@ export class StripeService {
   ) {
     const secretKey = process.env.STRIPE_SECRET_KEY;
     if (secretKey) {
-      this.stripe = new Stripe(secretKey, { apiVersion: '2023-10-16' });
+      this.stripe = new Stripe(secretKey);
     }
     this.webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   }

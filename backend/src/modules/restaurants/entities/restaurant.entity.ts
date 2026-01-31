@@ -146,6 +146,9 @@ export class Restaurant {
   })
   platformFeePercent: string;
 
+  @Column({ name: 'stripe_account_id', type: 'text', nullable: true })
+  stripeAccountId?: string;
+
   @Column({ name: 'operating_hours', type: 'jsonb', nullable: true })
   operatingHours?: {
     monday?: { open: string; close: string; closed?: boolean };

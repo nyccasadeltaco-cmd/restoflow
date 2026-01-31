@@ -70,6 +70,15 @@ export class Order {
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   totalAmount: number;
 
+  @Column({ name: 'stripe_session_id', type: 'text', nullable: true })
+  stripeSessionId?: string;
+
+  @Column({ name: 'stripe_payment_intent_id', type: 'text', nullable: true })
+  stripePaymentIntentId?: string;
+
+  @Column({ name: 'stripe_account_id', type: 'text', nullable: true })
+  stripeAccountId?: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

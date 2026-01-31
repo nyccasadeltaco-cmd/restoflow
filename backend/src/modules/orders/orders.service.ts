@@ -299,8 +299,8 @@ export class OrdersService {
     }
 
     // 3. Calculate taxes, fees, and total
-    // TODO: Implement tax calculation based on restaurant settings
-    const taxAmount = 0; // For now, no tax
+    const taxRate = Number(process.env.DEFAULT_TAX_RATE ?? '0');
+    const taxAmount = Number((subtotal * taxRate).toFixed(2));
     const tipAmount = createOrderDto.tipAmount || 0;
     const cardFeeAmount = 0; // TODO: Calculate if payment with card
     const platformFeeAmount = 0; // TODO: Calculate platform fee

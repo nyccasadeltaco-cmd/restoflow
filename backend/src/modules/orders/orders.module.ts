@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { OrdersService } from './orders.service';
+import { StripeService } from './stripe.service';
 import { RestaurantOrdersController } from './restaurant-orders.controller';
 import { PublicOrdersController } from './public-orders.controller';
+import { PublicStripeController } from './public-stripe.controller';
 import { Order } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
 import { MenuItem } from '../menus/entities/menu-item.entity';
@@ -28,8 +30,9 @@ import { ComboItem } from '../featured/entities/combo-item.entity';
   controllers: [
     RestaurantOrdersController,
     PublicOrdersController,
+    PublicStripeController,
   ],
-  providers: [OrdersService],
+  providers: [OrdersService, StripeService],
   exports: [OrdersService],
 })
 export class OrdersModule {}

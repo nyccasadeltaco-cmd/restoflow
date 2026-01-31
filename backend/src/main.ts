@@ -17,7 +17,14 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
 
   // Increase payload size limit for base64 images (50MB)
-  app.use(bodyParser.json({ limit: '50mb' }));
+  app.use(
+    bodyParser.json({
+      limit: '50mb',
+      verify: (req, _res, buf) => {
+        (req as any).rawBody = buf;
+      },
+    }),
+  );
   app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
   // Global prefix

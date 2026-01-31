@@ -9,6 +9,7 @@ import { Order, OrderStatus, PaymentStatus } from './entities/order.entity';
 export class StripeService {
   private stripe?: Stripe;
   private webhookSecret?: string;
+  private mode: 'test' | 'live';
 
   constructor(
     @InjectRepository(Restaurant)
@@ -16,11 +17,18 @@ export class StripeService {
     @InjectRepository(Order)
     private readonly ordersRepo: Repository<Order>,
   ) {
-    const secretKey = process.env.STRIPE_SECRET_KEY;
+    this.mode = (process.env.STRIPE_MODE || 'test') === 'live' ? 'live' : 'test';
+    const secretKey =
+      this.mode === 'live'
+        ? process.env.STRIPE_SECRET_KEY_LIVE || process.env.STRIPE_SECRET_KEY
+        : process.env.STRIPE_SECRET_KEY_TEST || process.env.STRIPE_SECRET_KEY;
     if (secretKey) {
       this.stripe = new Stripe(secretKey);
     }
-    this.webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    this.webhookSecret =
+      this.mode === 'live'
+        ? process.env.STRIPE_WEBHOOK_SECRET_LIVE || process.env.STRIPE_WEBHOOK_SECRET
+        : process.env.STRIPE_WEBHOOK_SECRET_TEST || process.env.STRIPE_WEBHOOK_SECRET;
   }
 
   private getClient(): Stripe {

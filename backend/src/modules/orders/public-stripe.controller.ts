@@ -47,11 +47,11 @@ export class PublicStripeController {
     const order = await this.ordersService.createPublicOrder(dto);
 
     const baseUrl = this.resolveBaseUrl(dto, req);
+    const slugParam = encodeURIComponent(restaurant.slug);
     const successUrl =
       dto.successUrl ??
-      `${baseUrl}/r/${restaurant.slug}/success/${order.id}?session_id={CHECKOUT_SESSION_ID}`;
-    const cancelUrl =
-      dto.cancelUrl ?? `${baseUrl}/r/${restaurant.slug}/cart?canceled=1`;
+      `${baseUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}&slug=${slugParam}`;
+    const cancelUrl = dto.cancelUrl ?? `${baseUrl}/payment-cancel?slug=${slugParam}`;
 
     const session = await this.stripeService.createCheckoutSession({
       order: order as any,

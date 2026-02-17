@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Order, OrderStatus } from './entities/order.entity';
+import { OrderNotificationsService } from './order-notifications.service';
 // Use CommonJS require to avoid default-import interop issues in Nest build/runtime.
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const twilio = require('twilio');
@@ -9,7 +10,9 @@ export class TwilioNotificationService {
   private readonly logger = new Logger(TwilioNotificationService.name);
   private client: ReturnType<typeof twilio> | null = null;
 
-  constructor() {
+  constructor(
+    private readonly orderNotificationsService: OrderNotificationsService,
+  ) {
     const sid = process.env.TWILIO_ACCOUNT_SID;
     const token = process.env.TWILIO_AUTH_TOKEN;
     if (sid && token) {
@@ -35,10 +38,31 @@ export class TwilioNotificationService {
       }
 
       const message = await this.client.messages.create(payload);
+      await this.orderNotificationsService.logOutboundSms({
+        orderId: order.id,
+        toPhone: to,
+        template: order.status,
+        providerStatus: String(message.status ?? '').toUpperCase() || null,
+        providerMessageSid: message.sid ?? null,
+        payload: {
+          to,
+          from,
+          body,
+          statusCallback: statusCallback ?? null,
+        },
+      });
       this.logger.log(
         `SMS sent for order ${order.id}: sid=${message.sid}, status=${message.status}`,
       );
     } catch (error: any) {
+      await this.orderNotificationsService.logOutboundSms({
+        orderId: order.id,
+        toPhone: to,
+        template: order.status,
+        providerStatus: 'FAILED',
+        errorMessage: error?.message ?? String(error),
+        payload: { to, from, body },
+      });
       this.logger.warn(
         `SMS send failed for order ${order.id}: ${error?.message ?? error}`,
       );

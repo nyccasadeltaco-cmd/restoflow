@@ -14,6 +14,9 @@ import { Restaurant } from '../restaurants/entities/restaurant.entity';
 import { Combo } from '../featured/entities/combo.entity';
 import { ComboItem } from '../featured/entities/combo-item.entity';
 import { TwilioNotificationService } from './twilio-notification.service';
+import { OrderNotification } from './entities/order-notification.entity';
+import { OrderNotificationsService } from './order-notifications.service';
+import { TwilioWebhookController } from './twilio-webhook.controller';
 
 @Module({
   imports: [
@@ -26,14 +29,21 @@ import { TwilioNotificationService } from './twilio-notification.service';
       Restaurant,
       Combo,
       ComboItem,
+      OrderNotification,
     ]),
   ],
   controllers: [
     RestaurantOrdersController,
     PublicOrdersController,
     PublicStripeController,
+    TwilioWebhookController,
   ],
-  providers: [OrdersService, StripeService, TwilioNotificationService],
+  providers: [
+    OrdersService,
+    StripeService,
+    TwilioNotificationService,
+    OrderNotificationsService,
+  ],
   exports: [OrdersService],
 })
 export class OrdersModule {}

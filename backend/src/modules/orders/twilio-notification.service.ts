@@ -1,17 +1,19 @@
 import { Injectable, Logger } from '@nestjs/common';
-import Twilio from 'twilio';
 import { Order, OrderStatus } from './entities/order.entity';
+// Use CommonJS require to avoid default-import interop issues in Nest build/runtime.
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const twilio = require('twilio');
 
 @Injectable()
 export class TwilioNotificationService {
   private readonly logger = new Logger(TwilioNotificationService.name);
-  private client: Twilio.Twilio | null = null;
+  private client: ReturnType<typeof twilio> | null = null;
 
   constructor() {
     const sid = process.env.TWILIO_ACCOUNT_SID;
     const token = process.env.TWILIO_AUTH_TOKEN;
     if (sid && token) {
-      this.client = Twilio(sid, token);
+      this.client = twilio(sid, token);
     }
   }
 
@@ -27,12 +29,7 @@ export class TwilioNotificationService {
 
     try {
       const statusCallback = process.env.TWILIO_STATUS_CALLBACK_URL?.trim();
-      const payload: Twilio.Twilio.Api.V2010.AccountContext.MessageListInstanceCreateOptions =
-        {
-          from,
-          to,
-          body,
-        };
+      const payload = { from, to, body } as any;
       if (statusCallback) {
         payload.statusCallback = statusCallback;
       }
@@ -76,4 +73,3 @@ export class TwilioNotificationService {
     return null;
   }
 }
-

@@ -21,14 +21,35 @@ export class TwilioNotificationService {
   }
 
   async sendOrderStatusSms(order: Order): Promise<void> {
-    if (!this.client) return;
+    if (!this.client) {
+      this.logger.warn(
+        `SMS skipped for order ${order.id}: Twilio client not configured (missing SID/TOKEN).`,
+      );
+      return;
+    }
     const from = process.env.TWILIO_FROM_NUMBER?.trim();
     const to = this.normalizePhone(order.customerPhone);
 
-    if (!from || !to) return;
+    if (!from) {
+      this.logger.warn(
+        `SMS skipped for order ${order.id}: TWILIO_FROM_NUMBER is missing.`,
+      );
+      return;
+    }
+    if (!to) {
+      this.logger.warn(
+        `SMS skipped for order ${order.id}: customer phone is missing/invalid (${order.customerPhone ?? 'null'}).`,
+      );
+      return;
+    }
 
     const body = this.buildStatusMessage(order);
-    if (!body) return;
+    if (!body) {
+      this.logger.warn(
+        `SMS skipped for order ${order.id}: no template for status ${order.status}.`,
+      );
+      return;
+    }
 
     try {
       const statusCallback = process.env.TWILIO_STATUS_CALLBACK_URL?.trim();
@@ -72,6 +93,8 @@ export class TwilioNotificationService {
   private buildStatusMessage(order: Order): string | null {
     const shortId = order.id.slice(0, 8).toUpperCase();
     switch (order.status) {
+      case OrderStatus.PENDING:
+        return `Casa del Taco NYC: Recibimos tu orden #${shortId}. Te avisamos cuando este en preparacion.`;
       case OrderStatus.CONFIRMED:
         return `Casa del Taco NYC: Recibimos tu orden #${shortId}. Te avisamos cuando este en preparacion.`;
       case OrderStatus.PREPARING:
@@ -91,6 +114,16 @@ export class TwilioNotificationService {
     if (!phone) return null;
     const trimmed = phone.trim();
     if (!trimmed) return null;
+
+    // Accept common US inputs like "(646) 791-0116", "6467910116", "16467910116".
+    const digits = trimmed.replace(/\D/g, '');
+    if (digits.length === 10) {
+      return `+1${digits}`;
+    }
+    if (digits.length === 11 && digits.startsWith('1')) {
+      return `+${digits}`;
+    }
+
     if (/^\+\d{8,15}$/.test(trimmed)) {
       return trimmed;
     }

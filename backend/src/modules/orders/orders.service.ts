@@ -317,7 +317,7 @@ export class OrdersService {
       source: createOrderDto.source,
       status: OrderStatus.PENDING,
       customerName: createOrderDto.customerName || null,
-      customerPhone: createOrderDto.customerPhone || null,
+      customerPhone: this.normalizeCustomerPhone(createOrderDto.customerPhone),
       notes: createOrderDto.notes || null,
       subtotalAmount: subtotal,
       taxAmount,
@@ -342,6 +342,8 @@ export class OrdersService {
     const items = await this.orderItemsRepository.find({
       where: { orderId: savedOrder.id },
     });
+
+    await this.twilioNotificationService.sendOrderStatusSms(savedOrder);
 
     const hydratedItems = await this.attachMenuItems(items);
     return { ...savedOrder, items: hydratedItems } as any;
@@ -409,5 +411,24 @@ export class OrdersService {
         `Cannot transition from ${currentStatus} to ${newStatus}`,
       );
     }
+  }
+
+  private normalizeCustomerPhone(phone?: string | null): string | null {
+    if (!phone) return null;
+    const trimmed = phone.trim();
+    if (!trimmed) return null;
+
+    const digits = trimmed.replace(/\D/g, '');
+    if (digits.length === 10) {
+      return `+1${digits}`;
+    }
+    if (digits.length === 11 && digits.startsWith('1')) {
+      return `+${digits}`;
+    }
+    if (/^\+\d{8,15}$/.test(trimmed)) {
+      return trimmed;
+    }
+
+    return null;
   }
 }

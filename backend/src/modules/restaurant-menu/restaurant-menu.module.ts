@@ -7,9 +7,10 @@ import { MenuConvertService } from './menu-convert.service';
 import { Menu } from '../menus/entities/menu.entity';
 import { MenuCategory } from '../menus/entities/menu-category.entity';
 import { MenuItem } from '../menus/entities/menu-item.entity';
+import { Restaurant } from '../restaurants/entities/restaurant.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Menu, MenuCategory, MenuItem])],
+  imports: [TypeOrmModule.forFeature([Menu, MenuCategory, MenuItem, Restaurant])],
   controllers: [RestaurantMenuController, MenuConvertController],
   providers: [RestaurantMenuService, MenuConvertService],
   exports: [RestaurantMenuService],

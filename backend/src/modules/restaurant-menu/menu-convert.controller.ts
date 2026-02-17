@@ -28,9 +28,9 @@ export class MenuConvertController {
 
   @Post('convert')
   @ApiOperation({
-    summary: 'Convertir brochure (PDF/JPG/PNG) a menu JSON',
+    summary: 'Convertir brochure (PDF) a menu JSON',
     description:
-      'Extrae texto desde PDF o imagen y genera un draft en formato restoflow-menu-v1.',
+      'Extrae texto desde PDF y genera un draft en formato restoflow-menu-v1.',
   })
   @UseInterceptors(
     FileInterceptor('file', {

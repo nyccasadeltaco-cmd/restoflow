@@ -17,6 +17,7 @@ import { FilterRestaurantOrdersDto } from './dto/filter-restaurant-orders.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { CreatePublicOrderDto } from './dto/create-public-order.dto';
+import { TwilioNotificationService } from './twilio-notification.service';
 
 @Injectable()
 export class OrdersService {
@@ -37,6 +38,7 @@ export class OrdersService {
     private combosRepository: Repository<Combo>,
     @InjectRepository(ComboItem)
     private comboItemsRepository: Repository<ComboItem>,
+    private readonly twilioNotificationService: TwilioNotificationService,
   ) {}
 
   /**
@@ -135,7 +137,9 @@ export class OrdersService {
       order.canceledAt = now;
     }
 
-    return this.ordersRepository.save(order);
+    const savedOrder = await this.ordersRepository.save(order);
+    await this.twilioNotificationService.sendOrderStatusSms(savedOrder);
+    return savedOrder;
   }
 
   /**

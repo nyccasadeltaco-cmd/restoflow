@@ -13,6 +13,7 @@ import { MenuCategory } from '../menus/entities/menu-category.entity';
 import { Restaurant } from '../restaurants/entities/restaurant.entity';
 import { Combo } from '../featured/entities/combo.entity';
 import { ComboItem } from '../featured/entities/combo-item.entity';
+import { TwilioNotificationService } from './twilio-notification.service';
 
 @Module({
   imports: [
@@ -32,7 +33,7 @@ import { ComboItem } from '../featured/entities/combo-item.entity';
     PublicOrdersController,
     PublicStripeController,
   ],
-  providers: [OrdersService, StripeService],
+  providers: [OrdersService, StripeService, TwilioNotificationService],
   exports: [OrdersService],
 })
 export class OrdersModule {}

@@ -1,0 +1,83 @@
+import '../models/menu_models.dart';
+
+const supertacosBranding = TenantBranding(
+  slug: 'supertacos',
+  name: 'Supertacos',
+  tagline: 'Tacos autenticos, rapido y fresco',
+);
+
+const supertacosCategories = <MenuCategory>[
+  MenuCategory(id: 'all', name: 'Todo', description: '', imageUrl: ''),
+  MenuCategory(id: 'tacos', name: 'Tacos', description: '', imageUrl: ''),
+  MenuCategory(id: 'burritos', name: 'Burritos', description: '', imageUrl: ''),
+  MenuCategory(id: 'quesadillas', name: 'Quesadillas', description: '', imageUrl: ''),
+  MenuCategory(id: 'drinks', name: 'Bebidas', description: '', imageUrl: ''),
+];
+
+const supertacosItems = <MenuItemModel>[
+  MenuItemModel(
+    id: 't1',
+    categoryId: 'tacos',
+    name: 'Taco Al Pastor',
+    description: 'Pinia, cebolla, cilantro, salsa roja.',
+    price: 3.50,
+    imageUrl: '',
+    isAvailable: true,
+    isActive: true,
+    tags: ['Popular'],
+    allergens: [],
+    preparationTime: 10,
+  ),
+  MenuItemModel(
+    id: 't2',
+    categoryId: 'tacos',
+    name: 'Taco Carne Asada',
+    description: 'Carne asada, guacamole, pico de gallo.',
+    price: 3.95,
+    imageUrl: '',
+    isAvailable: true,
+    isActive: true,
+    tags: ['Nuevo'],
+    allergens: [],
+    preparationTime: 12,
+  ),
+  MenuItemModel(
+    id: 'b1',
+    categoryId: 'burritos',
+    name: 'Burrito Supremo',
+    description: 'Arroz, frijoles, pollo/carne, queso, crema.',
+    price: 11.99,
+    imageUrl: '',
+    isAvailable: true,
+    isActive: true,
+    tags: [],
+    allergens: ['Lacteos'],
+    preparationTime: 18,
+  ),
+  MenuItemModel(
+    id: 'q1',
+    categoryId: 'quesadillas',
+    name: 'Quesadilla de Pollo',
+    description: 'Tortilla grande, queso, pollo, salsa verde.',
+    price: 9.49,
+    imageUrl: '',
+    isAvailable: true,
+    isActive: true,
+    tags: [],
+    allergens: ['Lacteos'],
+    preparationTime: 14,
+  ),
+  MenuItemModel(
+    id: 'd1',
+    categoryId: 'drinks',
+    name: 'Horchata',
+    description: 'Clasica, fria y cremosa.',
+    price: 3.25,
+    imageUrl: '',
+    isAvailable: true,
+    isActive: true,
+    tags: ['Bebida'],
+    allergens: [],
+    preparationTime: 3,
+  ),
+];

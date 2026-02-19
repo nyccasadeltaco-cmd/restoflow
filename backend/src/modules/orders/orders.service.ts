@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, In } from 'typeorm';
@@ -21,6 +22,8 @@ import { TwilioNotificationService } from './twilio-notification.service';
 
 @Injectable()
 export class OrdersService {
+  private readonly logger = new Logger(OrdersService.name);
+
   constructor(
     @InjectRepository(Order)
     private ordersRepository: Repository<Order>,
@@ -138,7 +141,13 @@ export class OrdersService {
     }
 
     const savedOrder = await this.ordersRepository.save(order);
-    await this.twilioNotificationService.sendOrderStatusSms(savedOrder);
+    try {
+      await this.twilioNotificationService.sendOrderStatusSms(savedOrder);
+    } catch (error) {
+      this.logger.warn(
+        `Order ${savedOrder.id} created, but SMS notification failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
     return savedOrder;
   }
 
@@ -343,7 +352,13 @@ export class OrdersService {
       where: { orderId: savedOrder.id },
     });
 
-    await this.twilioNotificationService.sendOrderStatusSms(savedOrder);
+    try {
+      await this.twilioNotificationService.sendOrderStatusSms(savedOrder);
+    } catch (error) {
+      this.logger.warn(
+        `Public order ${savedOrder.id} created, but SMS notification failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
 
     const hydratedItems = await this.attachMenuItems(items);
     return { ...savedOrder, items: hydratedItems } as any;

@@ -59,7 +59,7 @@ export class TwilioNotificationService {
       }
 
       const message = await this.client.messages.create(payload);
-      await this.orderNotificationsService.logOutboundSms({
+      await this.safeLogOutboundSms({
         orderId: order.id,
         toPhone: to,
         template: order.status,
@@ -76,7 +76,7 @@ export class TwilioNotificationService {
         `SMS sent for order ${order.id}: sid=${message.sid}, status=${message.status}`,
       );
     } catch (error: any) {
-      await this.orderNotificationsService.logOutboundSms({
+      await this.safeLogOutboundSms({
         orderId: order.id,
         toPhone: to,
         template: order.status,
@@ -86,6 +86,24 @@ export class TwilioNotificationService {
       });
       this.logger.warn(
         `SMS send failed for order ${order.id}: ${error?.message ?? error}`,
+      );
+    }
+  }
+
+  private async safeLogOutboundSms(input: {
+    orderId?: string | null;
+    toPhone?: string | null;
+    template?: string | null;
+    providerStatus?: string | null;
+    providerMessageSid?: string | null;
+    errorMessage?: string | null;
+    payload?: Record<string, any> | null;
+  }): Promise<void> {
+    try {
+      await this.orderNotificationsService.logOutboundSms(input);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to persist SMS notification log: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }

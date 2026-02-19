@@ -805,11 +805,13 @@ class _OurMenuSection extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final horizontal = width < 600 ? 16.0 : 32.0;
+        final isPhoneNarrow = width < 480;
+        final horizontal = isPhoneNarrow ? 12.0 : (width < 600 ? 16.0 : 32.0);
         var columns = 2;
+        if (isPhoneNarrow) columns = 1;
         if (width >= 800) columns = 3;
         if (width >= 1100) columns = 4;
-        final aspectRatio = width < 420 ? 1.2 : 1.4;
+        final aspectRatio = isPhoneNarrow ? 1.6 : (width < 420 ? 1.2 : 1.4);
 
         return Padding(
           padding: EdgeInsets.symmetric(horizontal: horizontal),
@@ -824,54 +826,62 @@ class _OurMenuSection extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
               const SizedBox(height: 24),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: categories.length,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: columns,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  childAspectRatio: aspectRatio,
-                ),
-                itemBuilder: (context, index) {
-                  final category = categories[index];
-                  return GestureDetector(
-                    onTap: () => onSelect(category.id),
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          CircleAvatar(
-                            radius: 28,
-                            backgroundColor: colors.accent.withOpacity(0.2),
-                            child: const Icon(Icons.local_dining, color: Colors.black87),
-                          ),
-                          const SizedBox(height: 12),
-                  Text(
-                    context.watch<LanguageProvider>().translateCategory(category.name),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                        ],
-                      ),
+              Align(
+                alignment: Alignment.center,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: isPhoneNarrow ? 420 : double.infinity,
+                  ),
+                  child: GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: categories.length,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: columns,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: aspectRatio,
                     ),
-                  );
-                },
+                    itemBuilder: (context, index) {
+                      final category = categories[index];
+                      return GestureDetector(
+                        onTap: () => onSelect(category.id),
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              CircleAvatar(
+                                radius: 28,
+                                backgroundColor: colors.accent.withOpacity(0.2),
+                                child: const Icon(Icons.local_dining, color: Colors.black87),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                context.watch<LanguageProvider>().translateCategory(category.name),
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
               ),
             ],
           ),

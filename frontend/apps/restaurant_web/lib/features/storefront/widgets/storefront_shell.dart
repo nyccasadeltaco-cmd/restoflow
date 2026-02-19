@@ -951,7 +951,7 @@ class _BrandLogo extends StatelessWidget {
   Widget build(BuildContext context) {
     final trimmed = logoUrl.trim();
     final width = MediaQuery.of(context).size.width;
-    final size = width < 600 ? 52.0 : 64.0;
+    final preferredSize = width < 600 ? 56.0 : 64.0;
 
     Widget fallbackImage() {
       return Image.asset(
@@ -961,24 +961,45 @@ class _BrandLogo extends StatelessWidget {
       );
     }
 
-    return SizedBox.square(
-      dimension: size,
-      child: DecoratedBox(
-        decoration: const BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white12,
-        ),
-        child: ClipOval(
-          child: trimmed.isNotEmpty
-              ? Image.network(
-                  trimmed,
-                  fit: BoxFit.cover,
-                  filterQuality: FilterQuality.high,
-                  errorBuilder: (_, __, ___) => fallbackImage(),
-                )
-              : fallbackImage(),
-        ),
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxH = constraints.maxHeight.isFinite
+            ? constraints.maxHeight
+            : preferredSize;
+        final maxW = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : preferredSize;
+        final size = preferredSize.clamp(24.0, maxH < maxW ? maxH : maxW);
+
+        return Center(
+          child: SizedBox.square(
+            dimension: size,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+                border: Border.all(
+                  color: Colors.black.withOpacity(0.18),
+                  width: 1.2,
+                ),
+              ),
+              child: ClipOval(
+                child: Padding(
+                  padding: const EdgeInsets.all(2.0),
+                  child: trimmed.isNotEmpty
+                      ? Image.network(
+                          trimmed,
+                          fit: BoxFit.cover,
+                          filterQuality: FilterQuality.high,
+                          errorBuilder: (_, __, ___) => fallbackImage(),
+                        )
+                      : fallbackImage(),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

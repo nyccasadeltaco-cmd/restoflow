@@ -59,7 +59,9 @@ class MenuApiService {
     if (resp.statusCode == 200 || resp.statusCode == 201) {
       return json.decode(resp.body) as Map<String, dynamic>;
     }
-    return null;
+    throw Exception(
+      'Public order failed (${resp.statusCode}): ${resp.body}',
+    );
   }
 
   /// Crea una sesion de Stripe Checkout

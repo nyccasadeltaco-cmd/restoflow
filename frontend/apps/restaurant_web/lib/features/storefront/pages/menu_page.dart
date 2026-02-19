@@ -79,6 +79,8 @@ class _MenuPageState extends State<MenuPage> {
     final categoryById = {
       for (final c in categories) c.id: c,
     };
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isNarrowScreen = screenWidth < 480;
 
     final filtered = items.where((item) {
       final byCat = selectedCategoryId == 'all' || item.categoryId == selectedCategoryId;
@@ -96,7 +98,10 @@ class _MenuPageState extends State<MenuPage> {
       showFooter: false,
       child: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          padding: EdgeInsets.symmetric(
+            horizontal: isNarrowScreen ? 12 : 24,
+            vertical: 24,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -198,13 +203,17 @@ class _MenuPageState extends State<MenuPage> {
                 LayoutBuilder(
                   builder: (context, constraints) {
                     final maxWidth = constraints.maxWidth;
-                    final cardWidth = maxWidth >= 1200
-                        ? 280.0
-                        : maxWidth >= 900
-                            ? 260.0
-                            : 220.0;
+                    final isNarrow = maxWidth < 520;
+                    final cardWidth = isNarrow
+                        ? maxWidth
+                        : maxWidth >= 1200
+                            ? 280.0
+                            : maxWidth >= 900
+                                ? 260.0
+                                : 220.0;
                     return Wrap(
-                      spacing: 16,
+                      alignment: WrapAlignment.center,
+                      spacing: isNarrow ? 0 : 16,
                       runSpacing: 16,
                       children: filtered.map((item) {
                         final rawCategoryName = categoryById[item.categoryId]?.name ?? '';

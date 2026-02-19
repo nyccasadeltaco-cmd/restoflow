@@ -1,6 +1,7 @@
 // ignore: avoid_web_libraries_in_flutter
 import 'dart:html' as html;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../data/state/cart_store.dart';
 import '../../../data/state/tenant_menu_provider.dart';
@@ -90,7 +91,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     _PaymentMethods(
                       colors: colors,
                       selected: _paymentMethod,
-                      onChange: (value) => setState(() => _paymentMethod = value),
+                      onChange: (value) =>
+                          setState(() => _paymentMethod = value),
                     ),
                     const SizedBox(height: 24),
                     _OrderSummary(
@@ -98,7 +100,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       tax: tax,
                       total: total,
                       tipPercent: _tipPercent,
-                      onTipChange: (value) => setState(() => _tipPercent = value),
+                      onTipChange: (value) =>
+                          setState(() => _tipPercent = value),
                       onSubmit: cart.lines.isEmpty || _submitting
                           ? null
                           : () => _submitOrder(context, cart),
@@ -120,7 +123,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
                           const SizedBox(height: 16),
                           _OrderTypeSelector(
                             selected: _orderType,
-                            onChange: (value) => setState(() => _orderType = value),
+                            onChange: (value) =>
+                                setState(() => _orderType = value),
                             colors: colors,
                           ),
                           const SizedBox(height: 24),
@@ -139,7 +143,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
                           _PaymentMethods(
                             colors: colors,
                             selected: _paymentMethod,
-                            onChange: (value) => setState(() => _paymentMethod = value),
+                            onChange: (value) =>
+                                setState(() => _paymentMethod = value),
                           ),
                         ],
                       ),
@@ -151,7 +156,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
                         tax: tax,
                         total: total,
                         tipPercent: _tipPercent,
-                        onTipChange: (value) => setState(() => _tipPercent = value),
+                        onTipChange: (value) =>
+                            setState(() => _tipPercent = value),
                         onSubmit: cart.lines.isEmpty || _submitting
                             ? null
                             : () => _submitOrder(context, cart),
@@ -174,6 +180,24 @@ class _CheckoutPageState extends State<CheckoutPage> {
       );
       return;
     }
+
+    final normalizedPhone = _normalizeUsPhone(_phoneCtrl.text);
+    if (normalizedPhone == null) {
+      final lang = context.read<LanguageProvider>();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(lang.t('checkout.invalidPhone'))),
+      );
+      return;
+    }
+
+    final normalizedEmail = _normalizeEmail(_emailCtrl.text);
+    if (_emailCtrl.text.trim().isNotEmpty && normalizedEmail == null) {
+      final lang = context.read<LanguageProvider>();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(lang.t('checkout.invalidEmail'))),
+      );
+      return;
+    }
     if (_orderType == 'delivery' && _addressCtrl.text.trim().isEmpty) {
       final lang = context.read<LanguageProvider>();
       ScaffoldMessenger.of(context).showSnackBar(
@@ -188,7 +212,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
       final lang = context.read<LanguageProvider>();
       final noteParts = <String>[];
       if (_orderType == 'delivery' && _addressCtrl.text.trim().isNotEmpty) {
-        noteParts.add('${lang.t('checkout.addressLabel')}: ${_addressCtrl.text.trim()}');
+        noteParts.add(
+            '${lang.t('checkout.addressLabel')}: ${_addressCtrl.text.trim()}');
       }
       if (_notesCtrl.text.trim().isNotEmpty) {
         noteParts.add(_notesCtrl.text.trim());
@@ -197,12 +222,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
       final payload = {
         'source': 'LINK',
         'customerName': _nameCtrl.text.trim(),
-        'customerPhone': _phoneCtrl.text.trim(),
+        'customerPhone': normalizedPhone,
         'notes': combinedNotes,
         'tipAmount': cart.subtotal * _tipPercent,
         'items': cart.lines
             .map((line) => {
-                  'itemType': line.type == CartItemType.combo ? 'combo' : 'menu_item',
+                  'itemType':
+                      line.type == CartItemType.combo ? 'combo' : 'menu_item',
                   if (line.type == CartItemType.combo) 'comboId': line.id,
                   if (line.type == CartItemType.menuItem) 'menuItemId': line.id,
                   'quantity': line.qty,
@@ -215,7 +241,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
           ...payload,
           'returnUrl': baseUrl,
         };
-        final session = await api.createCheckoutSession(widget.slug, sessionPayload);
+        final session =
+            await api.createCheckoutSession(widget.slug, sessionPayload);
         if (session == null) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
@@ -223,11 +250,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
           );
           return;
         }
-        if (session['requiresOnboarding'] == true && session['onboardingUrl'] != null) {
+        if (session['requiresOnboarding'] == true &&
+            session['onboardingUrl'] != null) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Pagos con tarjeta no disponibles. Configura Stripe.'),
+              content:
+                  Text('Pagos con tarjeta no disponibles. Configura Stripe.'),
             ),
           );
           html.window.open(session['onboardingUrl'].toString(), '_blank');
@@ -249,7 +278,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
       if (result != null && result['id'] != null) {
         cart.clear();
         if (!mounted) return;
-        Navigator.of(context).pushNamed('/r/${widget.slug}/success/${result['id']}');
+        Navigator.of(context)
+            .pushNamed('/r/${widget.slug}/success/${result['id']}');
         return;
       }
 
@@ -260,7 +290,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.read<LanguageProvider>().t('errors.generic', vars: {'error': '$e'}))),
+        SnackBar(
+            content: Text(context
+                .read<LanguageProvider>()
+                .t('errors.generic', vars: {'error': '$e'}))),
       );
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -333,7 +366,8 @@ class _TypeCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: selected ? colors.accent.withOpacity(0.2) : Colors.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: selected ? colors.primary : Colors.grey.shade300),
+            border: Border.all(
+                color: selected ? colors.primary : Colors.grey.shade300),
           ),
           child: Row(
             children: [
@@ -345,7 +379,8 @@ class _TypeCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text(title,
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
                   Text(subtitle, style: const TextStyle(color: Colors.black54)),
                 ],
               ),
@@ -395,14 +430,17 @@ class _CartItems extends StatelessWidget {
                         color: const Color(0xFFFFF0C1),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.local_dining, color: Colors.black54),
+                      child:
+                          const Icon(Icons.local_dining, color: Colors.black54),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(line.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          Text(line.name,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold)),
                           const SizedBox(height: 4),
                           Row(
                             children: [
@@ -411,7 +449,8 @@ class _CartItems extends StatelessWidget {
                                 onTap: () => cart.removeOne(line.type, line.id),
                               ),
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8),
                                 child: Text('${line.qty}'),
                               ),
                               _QtyButton(
@@ -448,7 +487,9 @@ class _CartItems extends StatelessWidget {
                       ),
                     ),
                     Text('\$${(line.price * line.qty).toStringAsFixed(2)}',
-                        style: TextStyle(color: colors.primary, fontWeight: FontWeight.bold)),
+                        style: TextStyle(
+                            color: colors.primary,
+                            fontWeight: FontWeight.bold)),
                   ],
                 ),
               );
@@ -521,14 +562,18 @@ class _CustomerInfoForm extends StatelessWidget {
               Expanded(
                 child: TextField(
                   controller: nameCtrl,
-                  decoration: InputDecoration(labelText: lang.t('checkout.name')),
+                  decoration:
+                      InputDecoration(labelText: lang.t('checkout.name')),
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: TextField(
                   controller: phoneCtrl,
-                  decoration: InputDecoration(labelText: lang.t('checkout.phone')),
+                  keyboardType: TextInputType.phone,
+                  inputFormatters: const [_UsPhoneInputFormatter()],
+                  decoration:
+                      InputDecoration(labelText: lang.t('checkout.phone')),
                 ),
               ),
             ],
@@ -536,19 +581,23 @@ class _CustomerInfoForm extends StatelessWidget {
           const SizedBox(height: 12),
           TextField(
             controller: emailCtrl,
-            decoration: InputDecoration(labelText: lang.t('checkout.emailOptional')),
+            keyboardType: TextInputType.emailAddress,
+            decoration:
+                InputDecoration(labelText: lang.t('checkout.emailOptional')),
           ),
           if (requireAddress) ...[
             const SizedBox(height: 12),
             TextField(
               controller: addressCtrl,
-              decoration: InputDecoration(labelText: lang.t('checkout.address')),
+              decoration:
+                  InputDecoration(labelText: lang.t('checkout.address')),
             ),
           ],
           const SizedBox(height: 12),
           TextField(
             controller: notesCtrl,
-            decoration: InputDecoration(labelText: lang.t('checkout.notesOptional')),
+            decoration:
+                InputDecoration(labelText: lang.t('checkout.notesOptional')),
             maxLines: 3,
           ),
         ],
@@ -633,7 +682,6 @@ class _PaymentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final lang = context.watch<LanguageProvider>();
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
@@ -642,18 +690,64 @@ class _PaymentCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected ? colors.accent.withOpacity(0.2) : Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: selected ? colors.primary : Colors.grey.shade300),
+          border: Border.all(
+              color: selected ? colors.primary : Colors.grey.shade300),
         ),
         child: Column(
           children: [
             Icon(icon, color: colors.primary),
             const SizedBox(height: 8),
             Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-            Text(subtitle, style: const TextStyle(color: Colors.black54, fontSize: 12)),
+            Text(subtitle,
+                style: const TextStyle(color: Colors.black54, fontSize: 12)),
           ],
         ),
       ),
     );
+  }
+}
+
+String? _normalizeUsPhone(String raw) {
+  final digits = raw.replaceAll(RegExp(r'\D'), '');
+  if (digits.length == 10) return digits;
+  if (digits.length == 11 && digits.startsWith('1')) {
+    return digits.substring(1);
+  }
+  return null;
+}
+
+String? _normalizeEmail(String raw) {
+  final email = raw.trim().toLowerCase();
+  if (email.isEmpty) return null;
+  const pattern = r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$';
+  if (!RegExp(pattern).hasMatch(email)) return null;
+  return email;
+}
+
+class _UsPhoneInputFormatter extends TextInputFormatter {
+  const _UsPhoneInputFormatter();
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final digits = newValue.text.replaceAll(RegExp(r'\D'), '');
+    final clamped = digits.length > 10 ? digits.substring(0, 10) : digits;
+    final formatted = _format(clamped);
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+
+  String _format(String digits) {
+    if (digits.isEmpty) return '';
+    if (digits.length <= 3) return '(${digits.substring(0, digits.length)}';
+    if (digits.length <= 6) {
+      return '(${digits.substring(0, 3)}) ${digits.substring(3)}';
+    }
+    return '(${digits.substring(0, 3)}) ${digits.substring(3, 6)}-${digits.substring(6)}';
   }
 }
 
@@ -738,9 +832,13 @@ class _OrderSummary extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(lang.t('checkout.total'),
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 16)),
               Text('\$${total.toStringAsFixed(2)}',
-                  style: TextStyle(color: colors.primary, fontWeight: FontWeight.bold, fontSize: 18)),
+                  style: TextStyle(
+                      color: colors.primary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18)),
             ],
           ),
           const SizedBox(height: 16),
@@ -749,7 +847,8 @@ class _OrderSummary extends StatelessWidget {
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: colors.primary,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24)),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               onPressed: onSubmit,
@@ -757,7 +856,8 @@ class _OrderSummary extends StatelessWidget {
                   ? const SizedBox(
                       height: 18,
                       width: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
                     )
                   : Text(lang.t('checkout.confirm')),
             ),
@@ -798,7 +898,9 @@ class _TipButton extends StatelessWidget {
           child: Center(
             child: Text(
               label,
-              style: TextStyle(color: active ? Colors.white : Colors.black87, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color: active ? Colors.white : Colors.black87,
+                  fontWeight: FontWeight.bold),
             ),
           ),
         ),

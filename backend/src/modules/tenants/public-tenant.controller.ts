@@ -25,7 +25,7 @@ export class PublicTenantController {
     }
 
     let tenant: Tenant | null = null;
-    let resolvedBy: 'domain' | 'slug' | null = null;
+    let resolvedBy: 'domain' | 'slug' | 'restaurant_slug' | null = null;
 
     // 1. Buscar por dominio
     if (normalizedHost) {
@@ -39,12 +39,11 @@ export class PublicTenantController {
       }
     }
 
-    // 2. Fallback: buscar por slug
+    // 2. Fallback: buscar por slug (tenant.slug o restaurant.slug)
     if (!tenant && normalizedSlug) {
-      tenant = await this.tenantRepo.findOne({ where: { slug: normalizedSlug } });
-      if (tenant) {
-        resolvedBy = 'slug';
-      }
+      const bySlug = await this.resolveTenantBySlugOrRestaurantSlug(normalizedSlug);
+      tenant = bySlug.tenant;
+      resolvedBy = bySlug.by;
     }
 
     if (!tenant || !resolvedBy) {
@@ -86,6 +85,29 @@ export class PublicTenantController {
       where: { tenantId, isActive: true },
       order: { createdAt: 'ASC' },
     });
+  }
+
+  private async resolveTenantBySlugOrRestaurantSlug(
+    slug: string,
+  ): Promise<{ tenant: Tenant | null; by: 'slug' | 'restaurant_slug' | null }> {
+    const byTenantSlug = await this.tenantRepo.findOne({ where: { slug } });
+    if (byTenantSlug) {
+      return { tenant: byTenantSlug, by: 'slug' };
+    }
+
+    const byRestaurantSlug = await this.restaurantRepo.findOne({
+      where: { slug, isActive: true },
+    });
+    if (!byRestaurantSlug?.tenantId) {
+      return { tenant: null, by: null };
+    }
+
+    const tenant = await this.tenantRepo.findOne({ where: { id: byRestaurantSlug.tenantId } });
+    if (!tenant) {
+      return { tenant: null, by: null };
+    }
+
+    return { tenant, by: 'restaurant_slug' };
   }
 
   private normalizeHost(value?: string): string | null {

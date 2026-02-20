@@ -8,18 +8,24 @@ import '../features/storefront/pages/contact_page.dart';
 import '../features/storefront/pages/payment_success_page.dart';
 import '../features/storefront/pages/payment_cancel_page.dart';
 
-const String _defaultSlug =
-    String.fromEnvironment('DEFAULT_SLUG', defaultValue: 'casadeltaconyc');
+String _defaultSlug = const String.fromEnvironment('DEFAULT_SLUG',
+    defaultValue: 'casadeltaconyc');
+
+void configureDefaultSlug(String slug) {
+  final normalized = slug.trim().toLowerCase();
+  if (normalized.isNotEmpty) {
+    _defaultSlug = normalized;
+  }
+}
 
 Route<dynamic> onGenerateRoute(RouteSettings settings) {
   final uri = Uri.parse(settings.name ?? '/');
-  final hostSlug = _slugFromHost();
 
   if (uri.path == '/' || uri.pathSegments.isEmpty) {
-    return MaterialPageRoute(builder: (_) => StoreHomePage(slug: hostSlug));
+    return MaterialPageRoute(builder: (_) => StoreHomePage(slug: _defaultSlug));
   }
 
-  String slug = hostSlug;
+  String slug = _defaultSlug;
   if (uri.pathSegments.isNotEmpty && uri.pathSegments[0] == 'r') {
     if (uri.pathSegments.length >= 2) {
       slug = uri.pathSegments[1];
@@ -66,14 +72,4 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
   }
 
   return MaterialPageRoute(builder: (_) => StoreHomePage(slug: slug));
-}
-
-String _slugFromHost() {
-  final host = Uri.base.host;
-  if (host.isEmpty || host == 'localhost' || host == '127.0.0.1') {
-    return _defaultSlug;
-  }
-  final parts = host.split('.');
-  if (parts.isEmpty) return _defaultSlug;
-  return parts.first;
 }

@@ -6,11 +6,16 @@ import 'data/state/cart_store.dart';
 import 'data/state/tenant_menu_provider.dart';
 import 'data/state/restaurant_website_provider.dart';
 import 'data/state/language_provider.dart';
+import 'features/menu/public_resolve_service.dart';
 
 const String _defaultSlug =
     String.fromEnvironment('DEFAULT_SLUG', defaultValue: 'casadeltaconyc');
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final resolvedSlug = await PublicResolveService.resolveInitialSlug();
+  configureDefaultSlug(resolvedSlug);
+
   runApp(
     MultiProvider(
       providers: [
@@ -19,13 +24,24 @@ void main() {
         ChangeNotifierProvider(create: (_) => RestaurantWebsiteProvider()),
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
       ],
-      child: const RestaurantWebApp(),
+      child: RestaurantWebApp(initialSlug: resolvedSlug),
     ),
   );
 }
 
 class RestaurantWebApp extends StatelessWidget {
-  const RestaurantWebApp({super.key});
+  const RestaurantWebApp({super.key, required this.initialSlug});
+
+  final String initialSlug;
+
+  String _resolveInitialRoute() {
+    final path = Uri.base.path;
+    final query = Uri.base.hasQuery ? '?${Uri.base.query}' : '';
+    if (path.isEmpty || path == '/') {
+      return '/r/${initialSlug.trim().isEmpty ? _defaultSlug : initialSlug}$query';
+    }
+    return '$path$query';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +58,7 @@ class RestaurantWebApp extends StatelessWidget {
         ],
       ),
       onGenerateRoute: onGenerateRoute,
-      initialRoute: '/r/$_defaultSlug',
+      initialRoute: _resolveInitialRoute(),
     );
   }
 }

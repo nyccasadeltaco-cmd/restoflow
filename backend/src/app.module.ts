@@ -28,6 +28,7 @@ import { SocialMediaModule } from './modules/social-media/social-media.module';
 import { AiModule } from './modules/ai/ai.module';
 import { HealthController } from './health.controller';
 import { FeaturedModule } from './modules/featured/featured.module';
+import { ReportsModule } from './modules/reports/reports.module';
 
 @Module({
   imports: [
@@ -36,7 +37,7 @@ import { FeaturedModule } from './modules/featured/featured.module';
       isGlobal: true,
       envFilePath: require('path').join(process.cwd(), 'backend/.env'),
     }),
-    
+
     // Database
     TypeOrmModule.forRootAsync({
       useFactory: ormConfig,
@@ -55,6 +56,7 @@ import { FeaturedModule } from './modules/featured/featured.module';
     OrdersModule,
     BillingModule,
     StatsModule,
+    ReportsModule,
     NotificationsModule,
     RestaurantPanelModule,
     RestaurantMenuModule,
@@ -75,8 +77,6 @@ import { FeaturedModule } from './modules/featured/featured.module';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(TenantMiddleware)
-      .forRoutes({ path: 'r/:slug/*', method: RequestMethod.ALL });
+    consumer.apply(TenantMiddleware).forRoutes({ path: 'r/:slug/*', method: RequestMethod.ALL });
   }
 }
